@@ -1,10 +1,10 @@
-﻿using System;
+﻿using CsvHelper;
+using System;
+using System.Collections.Generic;
 using static System.Console;
 using System.Globalization;
 using System.IO;
-using CsvHelper;
 using System.Linq;
-using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 public class Transaction
@@ -167,10 +167,9 @@ class Program
         WriteLine("Hit enter twice to cancel editing and return to main program.");
         WriteLine("For example: 1/7 100 pizza");
         string w = ReadLine().Trim();
-        string[] arr = w.Split();
         bool exists = false;
-        string[] filter_date = arr[0].Split("/");
-        if (String.IsNullOrEmpty(w))
+        
+        if (w == "")
         {
             WriteLine("Exited edit process");
             return;
@@ -180,6 +179,8 @@ class Program
             WriteLine("Wrong format. Exiting edit process. Please start again.");
             return;
         }
+        string[] arr = w.Split();
+        string[] filter_date = arr[0].Split("/");
         Transaction item = new Transaction();
         foreach (Transaction t in records)
         {
@@ -201,32 +202,41 @@ class Program
         WriteLine("Do you wish to edit date, amount or category?");
         WriteLine("For example, type \"date\" to edit the date.");
         string s = ReadLine().Trim();
-        if (String.IsNullOrEmpty(s))
-            return;
-        string new_data;
-        if (s == "date")
+        bool tryagain = true;
+        while(tryagain)
         {
-            WriteLine("Enter the new date");
-            new_data = ReadLine().Trim();
-            item.date = new_data+"/"+now.Year;
-        }
-        else if (s == "amount")
-        {
-            WriteLine("Enter the new amount");
-            new_data = ReadLine().Trim();
-            item.amount = int.Parse(new_data);
-        }
-        else if (s == "category")
-        {
-            WriteLine("Enter the new category");
-            new_data = ReadLine().Trim();
-            item.category = (new_data);
-        }
-        else
-        {
-            WriteLine("Wrong format. Exiting edit process. Please start again.");
+            tryagain = false;
+            if (s == "")
+                return;
+            string new_data;
+            if (s == "date")
+            {
+                WriteLine("Enter the new date");
+                new_data = ReadLine().Trim();
+                item.date = new_data+"/"+now.Year;
+            }
+            else if (s == "amount")
+            {
+                WriteLine("Enter the new amount");
+                new_data = ReadLine().Trim();
+                item.amount = int.Parse(new_data);
+            }
+            else if (s == "category")
+            {
+                WriteLine("Enter the new category");
+                new_data = ReadLine().Trim();
+                item.category = (new_data);
+            }
+            else
+            {
+                WriteLine("Wrong format. Please enter again.");
+                s = ReadLine().Trim();
+                tryagain = true;
+            }
         }
         records.Add(item);
+        WriteLine("Edited");
+        WriteLine();
     }
 
     static void view_balance()
