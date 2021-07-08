@@ -29,11 +29,11 @@ class Program
     static void help_text()
     {
         WriteLine();
-        WriteLine("Type \"[date] [amount] [source]\" : to enter a transaction.");
+        WriteLine("Type \"[date] [amount] [category]\" : to enter a transaction.");
         WriteLine("For example: 50 indicates an income and -50 indicates an expense.");
         WriteLine("Not Entering a year defaults it to the current year.");
         WriteLine("Type \"balance\" : to check current balance.");
-        WriteLine("Type \"view [month]\" : to view all transactions. Passing with no filters will show total balance.");
+        WriteLine("Type \"view [month]\" : to view all transactions. Passing with no filters will show all transactions.");
         WriteLine("Type \"delete [date] [amount] [category]\" : to delete transaction.");
         WriteLine("Type \"edit\" and follow instructions : to edit a transaction.");
         WriteLine("Type \"end\" to close program");
