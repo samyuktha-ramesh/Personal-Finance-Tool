@@ -29,9 +29,9 @@ class Program
     static void help_text()
     {
         WriteLine();
+        WriteLine("Enter dates in a locale-specific format. Not entering a year defaults it to the current year.");
         WriteLine("Type \"[date] [amount] [category]\" : to enter a transaction.");
         WriteLine("For example: 50 indicates an income and -50 indicates an expense.");
-        WriteLine("Not Entering a year defaults it to the current year.");
         WriteLine("Type \"balance\" : to check current balance.");
         WriteLine("Type \"view [month]\" : to view all transactions. Passing with no filters will show all transactions.");
         WriteLine("Type \"delete [date] [amount] [category]\" : to delete transaction.");
@@ -78,14 +78,23 @@ class Program
     {
         string[] words = s.Split(null);
         int amt = int.Parse(words[1]);
-        records.Add(new Transaction {date = DateTime.Parse(words[0]), 
+        try
+        {
+            records.Add(new Transaction {date = DateTime.Parse(words[0]), 
                                 amount = amt, category = words[2]});
+        }
+        catch
+        {
+            WriteLine("Invalid Input. Wrong Date Format.");
+        }
     }
 
     static void view_transactions(string s)
     {
         string[] w = s.Split(null);
         string filter = null;
+        int month = 0;
+        int year = 0;
         if (w.Length > 2)
         {
             invalid_text();
@@ -99,6 +108,14 @@ class Program
                 invalid_text();
                 return;
             }
+                string[] monthyear = filter.Split("/");
+                month = int.Parse(monthyear[0]);
+                year = (monthyear.Length == 1)? now.Year:int.Parse(monthyear[1]);
+                if (month > 12 || month < 1 || year > now.Year || year < 1700)
+                {
+                    WriteLine("Invalid Input. Wrong Date Format.");
+                    return;
+                }
         }
         if (records.Count > 0)
         {
@@ -112,7 +129,7 @@ class Program
                 string type = (t.amount >= 0)? "income ":"expense";
                 if (filter == null)
                     output = true;
-                else if (t.date.Month == int.Parse(filter))
+                else if (t.date.Month == month && t.date.Year == year)
                     output = true;
                 if (output)
                 {
@@ -138,19 +155,26 @@ class Program
     static void delete_item(string s)
     {
         string[] w = s.Split(null);
-        Transaction item = new Transaction();
-        DateTime filter = DateTime.Parse(w[1]);
-        bool exists = false;
+        Transaction item = null;
+        DateTime filter;
+        try
+        {
+            filter = DateTime.Parse(w[1]);
+        }
+        catch
+        {
+            WriteLine("Invalid Input. Wrong Date Format.");
+            return;
+        }
         foreach (Transaction t in records)
         {
             if (t.date == filter && t.amount == int.Parse(w[2]) && t.category == w[3])
             {
-                exists = true;
                 item = t;
                 break;
             }
         }
-        if (exists)
+        if (item != null)
         {
             records.Remove(item);
             WriteLine($"Deleted {item.date.ToShortDateString()} {item.amount} {item.category}");
@@ -159,39 +183,38 @@ class Program
             WriteLine("No such transaction exists.");
     }
 
-    static void edit_date(Transaction item)
+    static bool edit_date(Transaction item)
     {
         WriteLine("Enter the new date");
-        string new_data = ReadLine().Trim();
         while (true)
         {
+            string new_data = ReadLine().Trim();
             if(new_data == "")
             {
                 WriteLine("Exiting editing process. Returning to main program.");
-                return;
+                return true;
             }        
-            else if ((Regex.IsMatch(new_data, @"(\d\d|\d)/(\d\d|\d) *", RegexOptions.IgnoreCase) 
-            || Regex.IsMatch(new_data, @"(\d\d|\d)/(\d\d|\d)/\d\d\d\d *", RegexOptions.IgnoreCase)))
+            try
             {
                 DateTime new_date = DateTime.Parse(new_data);
                 records.Remove(item);
                 item.date = new_date;
                 break;
             }
-            else
+            catch
             {
                 WriteLine("Wrong date format. Please re-enter.");
-                new_data = ReadLine().Trim();
             }
         }
+        return false;
     }
 
-    static void edit_amount(Transaction item)
+    static bool edit_amount(Transaction item)
     {
         WriteLine("Enter the new amount");
-        string new_data = ReadLine().Trim();
         while (true)
         {
+            string new_data = ReadLine().Trim();
             if (Regex.IsMatch(new_data, @"-?\d+ *", RegexOptions.IgnoreCase))
             {
                 records.Remove(item);
@@ -201,26 +224,25 @@ class Program
             else if(new_data == "")
             {
                 WriteLine("Exiting editing process. Returning to main program.");
-                return;
+                return true;
             }
             else
-            {
                 WriteLine("Wrong amount format. Amount can have only numbers. Please re-enter.");
-                new_data = ReadLine().Trim();
-            }
         }
+        return false;
     }
-    static void edit_category(Transaction item)
+    static bool edit_category(Transaction item)
     {
         WriteLine("Enter the new category");
         string new_data = ReadLine().Trim();
         if(new_data == "")
         {
             WriteLine("Exiting editing process. Returning to main program.");
-            return;
+            return true;
         }
         records.Remove(item);
         item.category = (new_data);
+        return false;
     }
     static void edit()
     {
@@ -235,15 +257,24 @@ class Program
             WriteLine("Exited edit process");
             return;
         }
-        else if (!(Regex.IsMatch(w, @"(\d\d|\d)/(\d\d|\d) *-?\d* *[a-z]", RegexOptions.IgnoreCase) 
-        || Regex.IsMatch(w, @"(\d\d|\d)/(\d\d|\d)/\d\d\d\d *-?\d* *[a-z]", RegexOptions.IgnoreCase)))
+        else if (!(Regex.IsMatch(w, @"(\d\d|\d)/(\d\d|\d) *-?\d+ *[a-z]", RegexOptions.IgnoreCase) 
+        || Regex.IsMatch(w, @"(\d\d|\d)/(\d\d|\d)/\d\d\d\d *-?\d+ *[a-z]", RegexOptions.IgnoreCase)))
         {
             WriteLine("Wrong format. Exiting edit process. Please start again.");
             return;
         }
 
         string[] arr = w.Split();
-        DateTime filter = DateTime.Parse(arr[0]);
+        DateTime filter;
+        try
+        {
+            filter = DateTime.Parse(arr[0]);
+        }
+        catch
+        {
+            WriteLine("Wrong format. Exiting edit process. Please start again.");
+            return;
+        }
         Transaction item = new Transaction();
         foreach (Transaction t in records)
         {
@@ -261,31 +292,38 @@ class Program
         }
         WriteLine("Do you wish to edit date, amount or category?");
         WriteLine("For example, type \"date\" to edit the date.");
-        string s = ReadLine().Trim();
-        bool tryagain = true;
-        while(tryagain)
+        bool exit = false;
+        while(true)
         {
-            tryagain = false;
+            string s = ReadLine().Trim();
             if (s == "")
             {
                 WriteLine("Exiting editing process. Returning to main program.");
                 return;
             }
             if (s == "date")
-                edit_date(item);
-            else if (s == "amount")
-                edit_amount(item);                
-            else if (s == "category")
-                edit_category(item);
-            else
             {
-                WriteLine("Wrong format. Please enter again.");
-                s = ReadLine().Trim();
-                tryagain = true;
+                exit = edit_date(item);
+                break;
             }
+            else if (s == "amount")
+            {
+                exit = edit_amount(item); 
+                break;
+            }               
+            else if (s == "category")
+            {
+                exit = edit_category(item);
+                break;
+            }
+            else
+                WriteLine("Wrong format. Please enter again.");
         }
-        records.Add(item);
-        WriteLine("Edited");
+        if (!exit)
+        {
+            records.Add(item);
+            WriteLine("Edited");
+        }
         WriteLine();
     }
 
@@ -329,7 +367,7 @@ class Program
             else if (s == "edit")
                 edit();
             else if (Regex.IsMatch(s, @"delete *(\d\d|\d)/(\d\d|\d) *-?\d+ *[a-z]", 
-                    RegexOptions.IgnoreCase) || Regex.IsMatch(s, @"delete *(\d\d|\d)/(\d\d|\d)/\d\d\d\d *-?\d* *[a-z]", 
+                    RegexOptions.IgnoreCase) || Regex.IsMatch(s, @"delete *(\d\d|\d)/(\d\d|\d)/\d\d\d\d *-?\d+ *[a-z]", 
                     RegexOptions.IgnoreCase))
                 delete_item(s);
             else if (Regex.IsMatch(s, "balance", RegexOptions.IgnoreCase))
