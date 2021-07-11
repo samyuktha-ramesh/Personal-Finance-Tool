@@ -250,7 +250,6 @@ class Program
         WriteLine("Hit enter twice to cancel editing and return to main program.");
         WriteLine("For example: 1/7 100 pizza");
         string w = ReadLine().Trim();
-        bool exists = false;
         
         if (w == "")
         {
@@ -275,17 +274,16 @@ class Program
             WriteLine("Wrong format. Exiting edit process. Please start again.");
             return;
         }
-        Transaction item = new Transaction();
+        Transaction item = null;
         foreach (Transaction t in records)
         {
             if (t.date == filter && t.amount == int.Parse(arr[1]) && t.category == arr[2])
             {
-                exists = true;
                 item = t;
                 break;
             }
         }
-        if (!exists)
+        if (item == null)
         {
             WriteLine("No such transaction exists. Exiting edit process. Please start again.");
             return;
@@ -331,13 +329,13 @@ class Program
     {
         Dictionary<string, int> balance_dict =new Dictionary<string, int>();
         balance_dict.Add("Total", 0);
-        foreach (Transaction B in records)
+        foreach (Transaction b in records)
         {
-            balance_dict["Total"] += B.amount;
-            if (balance_dict.ContainsKey(B.category))
-                balance_dict[B.category] += B.amount;
+            balance_dict["Total"] += b.amount;
+            if (balance_dict.ContainsKey(b.category))
+                balance_dict[b.category] += b.amount;
             else
-                balance_dict[B.category] = B.amount;
+                balance_dict[b.category] = b.amount;
 
         }
         foreach( KeyValuePair<string, int> kvp in balance_dict)
@@ -362,7 +360,7 @@ class Program
                 write_to_csv(records);
                 break;
             }
-            else if (s == "help")
+            if (s == "help")
                 help_text();
             else if (s == "edit")
                 edit();
